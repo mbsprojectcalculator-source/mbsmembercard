@@ -9,6 +9,7 @@
         :root {
             --mbs-red: #d32f2f;
             --mbs-dark-red: #b71c1c;
+            --mbs-art: #2e7d32; /* Warna tema Art Store */
             --white: #ffffff;
             --light-grey: #f8f9fa;
         }
@@ -55,17 +56,24 @@
         .search-section {
             padding: 0 30px 30px;
             display: flex;
+            flex-direction: column; /* Ditukar ke column untuk susun butang */
+            gap: 15px;
+        }
+
+        .btn-group {
+            display: flex;
             gap: 10px;
         }
 
         input[type="text"] {
-            flex: 1;
+            width: 100%;
             padding: 15px;
             border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
             outline: none;
             transition: 0.3s;
+            box-sizing: border-box;
         }
 
         input[type="text"]:focus {
@@ -73,19 +81,23 @@
         }
 
         button.btn-search {
-            padding: 0 25px;
-            background: var(--mbs-red);
+            flex: 1;
+            padding: 12px;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             transition: 0.3s;
+            font-size: 14px;
+            text-transform: uppercase;
         }
 
-        button.btn-search:hover {
-            background: var(--mbs-dark-red);
-        }
+        .btn-mbs { background: var(--mbs-red); }
+        .btn-mbs:hover { background: var(--mbs-dark-red); }
+
+        .btn-art { background: var(--mbs-art); }
+        .btn-art:hover { opacity: 0.9; }
 
         /* Loading Spinner */
         #loader {
@@ -172,9 +184,7 @@
         }
 
         @media (max-width: 600px) {
-            .search-section { flex-direction: column; }
-            input[type="text"] { width: 100%; box-sizing: border-box; }
-            button.btn-search { padding: 15px; }
+            .btn-group { flex-direction: column; }
         }
     </style>
 </head>
@@ -187,13 +197,16 @@
     </div>
 
     <div class="search-section no-print">
-        <input type="text" id="searchInput" placeholder="Masukkan IC / Nama / No. Phone / Card no..." onkeypress="if(event.key === 'Enter') checkMember()">
-        <button class="btn-search" onclick="checkMember()">SEMAK</button>
+        <input type="text" id="searchInput" placeholder="Masukkan IC / Nama / No. Phone / Card no..." onkeypress="if(event.key === 'Enter') checkMember('MBS')">
+        <div class="btn-group">
+            <button class="btn-search btn-mbs" onclick="checkMember('MBS')">SEMAK MBS BOOKS</button>
+            <button class="btn-search btn-art" onclick="checkMember('ART')">SEMAK ART STORE</button>
+        </div>
     </div>
 
     <div id="loader">
         <div class="spinner"></div>
-        <p style="color: var(--mbs-red); font-size: 12px;">Menyemak 244,722 data pelanggan...</p>
+        <p id="loaderText" style="color: var(--mbs-red); font-size: 12px;">Menyemak data pelanggan...</p>
     </div>
 
     <div id="resultArea">
@@ -202,14 +215,18 @@
 </div>
 
 <script>
-    // GANTIKAN DENGAN URL APPS SCRIPT ANDA
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwRTd3gpQqkU145sD5LnTUt3Z9L-B3vsWi35_zZd9xy3xTXh2Xy-X3jEFh3kzqVYtpI/exec";
+    // URL Web App untuk kedua-dua pangkalan data
+    const URLS = {
+        MBS: "https://script.google.com/macros/s/AKfycbwRTd3gpQqkU145sD5LnTUt3Z9L-B3vsWi35_zZd9xy3xTXh2Xy-X3jEFh3kzqVYtpI/exec",
+        ART: "GANTIKAN_DENGAN_URL_WEB_APP_ART_STORE_ANDA" 
+    };
 
-    async function checkMember() {
+    async function checkMember(target) {
         const query = document.getElementById('searchInput').value.trim();
         const resultArea = document.getElementById('resultArea');
         const resultContent = document.getElementById('resultContent');
         const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loaderText');
 
         if (query.length < 2) {
             alert("Sila masukkan sekurang-kurangnya 2 aksara untuk mencari.");
@@ -219,24 +236,29 @@
         // Tunjuk loading, sorok hasil lama
         resultArea.style.display = "none";
         loader.style.display = "block";
+        loaderText.innerText = `Menyemak pangkalan data ${target === 'MBS' ? 'MBS Books' : 'Art Store'}...`;
 
         try {
-            const response = await fetch(`${SCRIPT_URL}?id=${encodeURIComponent(query)}`);
+            const response = await fetch(`${URLS[target]}?id=${encodeURIComponent(query)}`);
             const res = await response.json();
 
             loader.style.display = "none";
             resultArea.style.display = "block";
 
             if (res.status === "FOUND") {
-                let html = `<p style="font-weight:bold; color:#333;">Dijumpai: ${res.data.length} rekod</p>`;
+                // Gunakan warna header berdasarkan pangkalan data yang dicari
+                const headerColor = target === 'MBS' ? 'var(--mbs-red)' : 'var(--mbs-art)';
+                const sourceTitle = target === 'MBS' ? 'MBS BOOKS' : 'ART STORE';
+
+                let html = `<p style="font-weight:bold; color:#333;">Dijumpai: ${res.data.length} rekod di ${sourceTitle}</p>`;
                 html += `
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th>Acct Code</th>
-                                <th>Nama Pelanggan</th>
-                                <th>Status</th>
+                                <th style="background: ${headerColor}">Acct Code</th>
+                                <th style="background: ${headerColor}">Nama Pelanggan</th>
+                                <th style="background: ${headerColor}">Status</th>
                             </tr>
                         </thead>
                         <tbody>`;
@@ -264,10 +286,11 @@
             } else if (res.status === "SHORT") {
                 resultContent.innerHTML = `<center style="color:var(--mbs-red); padding:20px;">${res.message}</center>`;
             } else {
+                const sourceTitle = target === 'MBS' ? 'MBS Books' : 'Art Store';
                 resultContent.innerHTML = `
                     <center style="padding:40px;">
                         <span style="font-size:50px;">🔍</span>
-                        <p style="color:#888; font-weight:bold;">Maaf, maklumat tidak dijumpai.</p>
+                        <p style="color:#888; font-weight:bold;">Maaf, maklumat tidak dijumpai dalam ${sourceTitle}.</p>
                     </center>`;
             }
         } catch (error) {
@@ -278,5 +301,4 @@
 </script>
 
 </body>
-
 </html>
