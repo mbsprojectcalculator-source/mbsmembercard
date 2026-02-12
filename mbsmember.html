@@ -245,18 +245,32 @@ function startScan() {
     html5QrCode = new Html5Qrcode("reader");
 
     Html5Qrcode.getCameras().then(devices => {
-        if (devices.length) {
-            html5QrCode.start(
-                devices[0].id,
-                { fps: 10, qrbox: { width: 250, height: 150 } },
-                (decodedText) => {
-                    document.getElementById('cardNo').value = decodedText;
-                    stopScan();
-                }
-            );
+
+        if (!devices.length) {
+            alert("Tiada kamera dijumpai.");
+            return;
         }
+
+        // Cari kamera belakang
+        let backCamera = devices.find(device =>
+            device.label.toLowerCase().includes('back') ||
+            device.label.toLowerCase().includes('environment')
+        );
+
+        // Kalau jumpa guna belakang, kalau tak guna kamera terakhir
+        const cameraId = backCamera ? backCamera.id : devices[devices.length - 1].id;
+
+        html5QrCode.start(
+            cameraId,
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            (decodedText) => {
+                document.getElementById('cardNo').value = decodedText;
+                stopScan();
+            }
+        );
+
     }).catch(err => {
-        alert("Kamera tidak dibenarkan atau tiada kamera.");
+        alert("Kamera tidak dibenarkan: " + err);
     });
 }
 
@@ -320,3 +334,4 @@ async function hantarData() {
 
 </body>
 </html>
+
