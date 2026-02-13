@@ -1,322 +1,302 @@
 <!DOCTYPE html>
 <html lang="ms">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MBS Member Registration</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBS Member Registration</title>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<style>
-:root { --main-color: #007bff; --bg-color: #e7f1ff; }
+    <style>
+        :root { --main-color: #007bff; --bg-color: #e7f1ff; }
+        body { background-color: var(--bg-color); transition: background-color 0.5s ease; font-family: 'Segoe UI', sans-serif; padding: 20px 0; }
+        
+        .card { 
+            background: #ffffff !important; border: none; border-top: 10px solid var(--main-color); 
+            border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            max-width: 650px; margin: auto; transition: border-color 0.5s ease;
+        }
 
-body {
-    background-color: var(--bg-color);
-    transition: 0.5s;
-    font-family: sans-serif;
-    padding: 20px 0;
-}
+        input[type="text"], textarea, .form-select { text-transform: uppercase; }
+        .fixed-country { background-color: #f8f9fa !important; color: #6c757d; font-weight: bold; }
+        
+        #signature-pad { border: 2px dashed #ccc; background: #fff; width: 100%; height: 200px; cursor: crosshair; border-radius: 8px; }
+        #reader { width: 100%; display: none; margin-bottom: 10px; border-radius: 10px; overflow: hidden; border: 2px solid var(--main-color); }
+        
+        #loader { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.9); z-index: 9999; 
+            justify-content: center; align-items: center; flex-direction: column; 
+        }
 
-.card {
-    background: #fff;
-    border: none;
-    border-top: 10px solid var(--main-color);
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    max-width: 700px;
-    margin: auto;
-}
+        .tnc-box { 
+            height: 180px; overflow-y: auto; font-size: 11px; background: #f8f9fa; 
+            padding: 12px; border: 1px solid #ddd; margin-bottom: 15px; text-align: justify; line-height: 1.4;
+        }
 
-input[type="text"], textarea, .form-select {
-    text-transform: uppercase;
-}
-
-.fixed-country {
-    background-color: #e9ecef !important;
-    font-weight: bold;
-}
-
-#signature-pad {
-    border: 2px dashed #ccc;
-    background: #fff;
-    width: 100%;
-    height: 200px;
-    cursor: crosshair;
-}
-
-#reader {
-    width: 100%;
-    display: none;
-    margin-bottom: 10px;
-}
-
-#loader {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(255,255,255,0.9);
-    z-index: 9999;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-}
-</style>
+        .btn-primary { background-color: var(--main-color) !important; border-color: var(--main-color) !important; font-weight: bold; padding: 12px; }
+    </style>
 </head>
 <body>
 
 <div id="loader">
-    <div class="spinner-border text-primary"></div>
-    <div class="mt-3 fw-bold">SEDANG MEMPROSES...</div>
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+    <div class="mt-3 fw-bold">SEDANG MEMPROSES & MENJANA PDF...</div>
 </div>
 
 <div class="container">
-<div class="card p-4">
+    <div class="card p-4">
+        <h3 class="text-center mb-4 fw-bold" style="color: var(--main-color);">MBS MEMBER REGISTRATION</h3>
+        
+        <form id="regForm">
+            <div class="mb-3">
+                <label class="form-label fw-bold">JENIS MEMBER:</label>
+                <select class="form-select form-select-lg" id="type" onchange="updateTheme()">
+                    <option value="PPS" selected>PPS (BLUE - DEFAULT)</option>
+                    <option value="RED">RED</option>
+                    <option value="SKYBLUE">SKYBLUE</option>
+                    <option value="BLACK">BLACK</option>
+                </select>
+            </div>
 
-<h3 class="text-center mb-4" style="color: var(--main-color);">
-MBS MEMBER REGISTRATION
-</h3>
+            <div class="mb-3">
+                <label class="form-label fw-bold">MEMBER CARD NO:</label>
+                <div id="reader"></div>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="cardNo" placeholder="SCAN ATAU TAIP NO KAD" required>
+                    <button class="btn btn-dark" type="button" onclick="startScan()">📷 SCAN</button>
+                </div>
+            </div>
 
-<form id="regForm">
+            <div class="mb-3">
+                <label class="form-label fw-bold">NAMA PENUH:</label>
+                <input type="text" class="form-control" id="nama" required>
+            </div>
 
-<div class="mb-3">
-<label class="form-label fw-bold">JENIS MEMBER:</label>
-<select class="form-select" id="type" onchange="updateTheme()">
-<option value="PPS" selected>PPS (BLUE)</option>
-<option value="RED">RED</option>
-<option value="SKYBLUE">SKYBLUE</option>
-<option value="BLACK">BLACK</option>
-</select>
-</div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label class="form-label fw-bold">NOMBOR IC:</label>
+                    <input type="text" class="form-control" id="ic" placeholder="Cth: 900101065544" required>
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label fw-bold">HANDPHONE:</label>
+                    <input type="tel" class="form-control" id="phone" placeholder="Cth: 0123456789" required>
+                </div>
+            </div>
 
-<div class="mb-3">
-<label class="form-label fw-bold">MEMBER CARD NO:</label>
-<div id="reader"></div>
-<div class="input-group">
-<input type="text" class="form-control" id="cardNo" placeholder="SCAN ATAU TAIP NO KAD" required>
-<button class="btn btn-outline-secondary" type="button" onclick="startScan()">📷 SCAN</button>
-</div>
-</div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">ALAMAT:</label>
+                <textarea class="form-control" id="alamat" rows="2" required></textarea>
+            </div>
 
-<div class="mb-3">
-<label class="form-label fw-bold">NAMA PENUH:</label>
-<input type="text" class="form-control" id="nama" required>
-</div>
+            <div class="row">
+                <div class="col-4 mb-3">
+                    <label class="form-label fw-bold">POSTCODE:</label>
+                    <input type="text" class="form-control" id="postcode" required>
+                </div>
+                <div class="col-4 mb-3">
+                    <label class="form-label fw-bold">CITY:</label>
+                    <input type="text" class="form-control" id="city" required>
+                </div>
+                <div class="col-4 mb-3">
+                    <label class="form-label fw-bold">STATE:</label>
+                    <select class="form-select" id="state" required>
+                        <option value="" disabled selected>PILIH</option>
+                        <option>PAHANG</option><option>SELANGOR</option><option>KUALA LUMPUR</option>
+                        <option>JOHOR</option><option>KEDAH</option><option>KELANTAN</option>
+                        <option>MELAKA</option><option>NEGERI SEMBILAN</option><option>PERAK</option>
+                        <option>PERLIS</option><option>PULAU PINANG</option><option>SABAH</option>
+                        <option>SARAWAK</option><option>TERENGGANU</option>
+                    </select>
+                </div>
+            </div>
 
-<div class="row">
-<div class="col-6 mb-3">
-<label class="form-label fw-bold">NOMBOR IC:</label>
-<input type="text" class="form-control" id="ic" required>
-</div>
-<div class="col-6 mb-3">
-<label class="form-label fw-bold">HANDPHONE:</label>
-<input type="tel" class="form-control" id="phone" required>
-</div>
-</div>
+            <div class="mb-4">
+                <label class="form-label fw-bold">BIL ANAK MASIH BELAJAR:</label>
+                <input type="number" class="form-control" id="anak" value="0">
+            </div>
 
-<div class="mb-3">
-<label class="form-label fw-bold">ALAMAT:</label>
-<textarea class="form-control" id="alamat" rows="2" required></textarea>
-</div>
-
-<div class="row">
-<div class="col-4 mb-3">
-<label class="form-label fw-bold">POSTCODE:</label>
-<input type="text" class="form-control" id="postcode" required>
-</div>
-<div class="col-4 mb-3">
-<label class="form-label fw-bold">CITY:</label>
-<input type="text" class="form-control" id="city" required>
-</div>
-<div class="col-4 mb-3">
-<label class="form-label fw-bold">STATE:</label>
-<select class="form-select" id="state" required>
-<option value="" disabled selected>PILIH NEGERI</option>
-<option>JOHOR</option>
-<option>KEDAH</option>
-<option>KELANTAN</option>
-<option>MELAKA</option>
-<option>NEGERI SEMBILAN</option>
-<option>PAHANG</option>
-<option>PERAK</option>
-<option>PERLIS</option>
-<option>PULAU PINANG</option>
-<option>SABAH</option>
-<option>SARAWAK</option>
-<option>SELANGOR</option>
-<option>TERENGGANU</option>
-<option>W.P. KUALA LUMPUR</option>
-<option>W.P. LABUAN</option>
-<option>W.P. PUTRAJAYA</option>
-</select>
-</div>
+            <button type="button" class="btn btn-primary w-100" onclick="openSignatureModal()">
+                SETERUSNYA: PENGESAHAN & TANDATANGAN
+            </button>
+        </form>
+    </div>
 </div>
 
-<div class="mb-3">
-<label class="form-label fw-bold">COUNTRY:</label>
-<input type="text" class="form-control fixed-country" value="MALAYSIA" readonly>
-</div>
-
-<div class="mb-4">
-<label class="form-label fw-bold">BIL ANAK MASIH BELAJAR:</label>
-<input type="number" class="form-control" id="anak" value="0">
-</div>
-
-<button type="button" class="btn btn-primary w-100 py-3" onclick="openSignatureModal()">
-SETERUSNYA: PENGESAHAN & SIGN
-</button>
-
-</form>
-</div>
-</div>
-
-<!-- MODAL -->
 <div class="modal fade" id="tncModal" tabindex="-1" data-bs-backdrop="static">
-<div class="modal-dialog modal-lg">
-<div class="modal-content">
-<div class="modal-body">
-
-<h5 class="fw-bold">PENGAKUAN & SYARAT</h5>
-
-<div style="height:150px; overflow-y:auto; font-size:12px; background:#f9f9f9; padding:10px; border:1px solid #ddd; margin-bottom:15px;">
-Saya bersetuju untuk menyertai & mematuhi Terma & Syarat Kad Diskaun MBS Books & Stationery.
-</div>
-
-<label class="fw-bold mb-2">TANDATANGAN:</label>
-<canvas id="signature-pad"></canvas>
-<button class="btn btn-link btn-sm text-danger" onclick="signaturePad.clear()">Padam Semula</button>
-
-</div>
-
-<div class="modal-footer">
-<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">BATAL</button>
-<button type="button" class="btn btn-primary" onclick="hantarData()">SAHKAN & HANTAR</button>
-</div>
-
-</div>
-</div>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">TERMA, SYARAT & PENGESAHAN</h5>
+            </div>
+            <div class="modal-body">
+                <div class="tnc-box" id="tncText">
+                    <strong>ENGLISH:</strong><br>
+                    I agree to participate & abide at MBS Books & Stationery Pahang Pride Discount Card Term & Conditions. I hereby confirm that all my personal information stated above is true and complete. I hereby irrevocably consent and authorized MBS Books & Stationery to process any of my information and to release the same to any related and/or associate company within the MBS Books & Stationery existing of future business partners of strategic alliances and/or any other 3rd party as MBS may in its absolute discretion deem necessary or expedient for the purpose of marketing and promotion of products and services. I hereby confirm that no future permission or consent from me is necessary of required in relation there to and this shall constitute the consent required under the Personal Data Protection Act 2010 and any other contractual consert for such disclosure of information.
+                    <br><br>
+                    <strong>BAHASA MELAYU:</strong><br>
+                    Saya bersetuju untuk menyertai & mematuhi Terma & Syarat Kad Diskaun MBS Books & Stationery Pahang Pride. Saya dengan ini mengesahkan bahawa semua maklumat peribadi saya yg dinyatakan diatas adalah benar & lengkap. Saya dengan ini secara tidak boleh membatalkan kebenaran & member kuasa kepada MBS Books & Stationery untuk memproses mana-mana maklumat saya dan untuk mengeluarkannya kepada mana-mana syarikat berkaitan dan.atau bersekutu dalam MBS Books & Stationery,perniaagan masa hadapan MBS yang sedia ada, rakan kongsi pakatan startegik dan/atau mana-mana pihak ke-3 lain yg MBS mungkin menurut budi bicara mutlaknya perlu atau suai manfaat untuk tujuan pemasaran dan promosi produk & perkhidmatan. Saya dengan ini mengesahkan bahawa tiada kebenaran masa depan a tau persetujuan daripada saya diperlukan berhubung dengannya dan ini akan membentuk persetujuan yg diperlukan berhubung dengannya dan ini akan membentuk persetujuan yg diperlukan di bawah Akta Perlindungan Data Peribadi 2010 dan sebarang persetujuan kontrak lain untuk pendedahan maklumat sedemikian.
+                </div>
+                
+                <label class="fw-bold mb-2">SILA TURUNKAN TANDATANGAN DI BAWAH:</label>
+                <canvas id="signature-pad"></canvas>
+                <div class="text-end mt-2">
+                    <button class="btn btn-sm btn-outline-danger" onclick="signaturePad.clear()">Padam Semula</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">BATAL</button>
+                <button type="button" class="btn btn-primary px-4" onclick="hantarDanDownload()">SAHKAN & DAFTAR</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWu_EnJEJeszS8tWOeACSzg9mlWGHOivWKA70-_7T449Kakqx78CX4jmi_Vf-_Zkw/exec";
-let signaturePad;
-let html5QrCode;
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWu_EnJEJeszS8tWOeACSzg9mlWGHOivWKA70-_7T449Kakqx78CX4jmi_Vf-_Zkw/exec";
+    let signaturePad;
+    let html5QrCode;
 
-// INIT
-window.addEventListener("load", function () {
-    const canvas = document.getElementById("signature-pad");
-    signaturePad = new SignaturePad(canvas);
-});
+    // 1. TEMA DINAMIK
+    function updateTheme() {
+        const type = document.getElementById('type').value;
+        const themes = {
+            'PPS': { main: '#007bff', bg: '#e7f1ff' },
+            'RED': { main: '#dc3545', bg: '#f8d7da' },
+            'SKYBLUE': { main: '#0dcaf0', bg: '#e0f7fa' },
+            'BLACK': { main: '#212529', bg: '#dee2e6' }
+        };
+        document.documentElement.style.setProperty('--main-color', themes[type].main);
+        document.documentElement.style.setProperty('--bg-color', themes[type].bg);
+    }
 
-// Resize canvas when modal shown
-document.getElementById('tncModal').addEventListener('shown.bs.modal', function () {
-    resizeCanvas();
-});
+    // 2. SCANNER BARCODE
+    function startScan() {
+        const reader = document.getElementById('reader');
+        reader.style.display = 'block';
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            (decodedText) => {
+                document.getElementById('cardNo').value = decodedText;
+                stopScan();
+            }
+        ).catch(err => alert("Kamera Error: " + err));
+    }
 
-function resizeCanvas() {
-    const canvas = document.getElementById("signature-pad");
-    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-    canvas.width = canvas.offsetWidth * ratio;
-    canvas.height = canvas.offsetHeight * ratio;
-    canvas.getContext("2d").scale(ratio, ratio);
-    signaturePad.clear();
-}
-
-// THEME
-function updateTheme() {
-    const type = document.getElementById('type').value;
-    const themes = {
-        PPS: { main: '#007bff', bg: '#e7f1ff' },
-        RED: { main: '#dc3545', bg: '#f8d7da' },
-        SKYBLUE: { main: '#0dcaf0', bg: '#e0f7fa' },
-        BLACK: { main: '#212529', bg: '#dee2e6' }
-    };
-    document.documentElement.style.setProperty('--main-color', themes[type].main);
-    document.documentElement.style.setProperty('--bg-color', themes[type].bg);
-}
-
-// SCAN
-function startScan() {
-    const reader = document.getElementById('reader');
-    reader.style.display = 'block';
-
-    html5QrCode = new Html5Qrcode("reader");
-
-    Html5Qrcode.getCameras().then(devices => {
-        if (devices.length) {
-            html5QrCode.start(
-                devices[0].id,
-                { fps: 10, qrbox: { width: 250, height: 150 } },
-                (decodedText) => {
-                    document.getElementById('cardNo').value = decodedText;
-                    stopScan();
-                }
-            );
+    function stopScan() {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => { document.getElementById('reader').style.display = 'none'; });
         }
-    }).catch(err => {
-        alert("Kamera tidak dibenarkan atau tiada kamera.");
-    });
-}
-
-function stopScan() {
-    if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-            document.getElementById('reader').style.display = 'none';
-        });
-    }
-}
-
-// MODAL
-function openSignatureModal() {
-    const form = document.getElementById('regForm');
-    if (!form.checkValidity()) return form.reportValidity();
-    new bootstrap.Modal(document.getElementById('tncModal')).show();
-}
-
-// SUBMIT
-async function hantarData() {
-
-    if (signaturePad.isEmpty()) {
-        alert("Sila turunkan tandatangan!");
-        return;
     }
 
-    document.getElementById('loader').style.display = 'flex';
-
-    const data = {
-        type: type.value,
-        cardNo: cardNo.value,
-        nama: nama.value,
-        ic: ic.value,
-        phone: phone.value,
-        alamat: alamat.value,
-        postcode: postcode.value,
-        city: city.value,
-        state: state.value,
-        anak: anak.value,
-        signature: signaturePad.toDataURL()
+    // 3. SIGNATURE & MODAL
+    window.onload = () => {
+        const canvas = document.getElementById('signature-pad');
+        signaturePad = new SignaturePad(canvas);
+        window.addEventListener("resize", resizeCanvas);
     };
 
-    try {
-        await fetch(APPS_SCRIPT_URL, {
-            method: "POST",
-            body: JSON.stringify(data),
-            mode: "no-cors"
-        });
-
-        alert("PENDAFTARAN BERJAYA!");
-        location.reload();
-
-    } catch (error) {
-        alert("Sistem sedang memproses...");
-        location.reload();
+    function resizeCanvas() {
+        const canvas = document.getElementById('signature-pad');
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        signaturePad.clear();
     }
-}
+
+    function openSignatureModal() {
+        const form = document.getElementById('regForm');
+        if (!form.checkValidity()) return form.reportValidity();
+        const myModal = new bootstrap.Modal(document.getElementById('tncModal'));
+        myModal.show();
+        setTimeout(resizeCanvas, 500);
+    }
+
+    // 4. GENERATE PDF & HANTAR DATA
+    async function hantarDanDownload() {
+        if (signaturePad.isEmpty()) return alert("Sila turunkan tandatangan!");
+
+        document.getElementById('loader').style.display = 'flex';
+        
+        const data = {
+            type: document.getElementById('type').value,
+            cardNo: document.getElementById('cardNo').value.toUpperCase(),
+            nama: document.getElementById('nama').value.toUpperCase(),
+            ic: document.getElementById('ic').value,
+            phone: document.getElementById('phone').value,
+            alamat: document.getElementById('alamat').value.toUpperCase(),
+            postcode: document.getElementById('postcode').value,
+            city: document.getElementById('city').value.toUpperCase(),
+            state: document.getElementById('state').value,
+            anak: document.getElementById('anak').value,
+            signature: signaturePad.toDataURL()
+        };
+
+        // Simpan PDF Terlebih Dahulu
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Header PDF
+            doc.setFontSize(18); doc.setFont("helvetica", "bold");
+            doc.text("MBS BOOKS & STATIONERY", 105, 20, { align: "center" });
+            doc.setFontSize(12);
+            doc.text("PAHANG PRIDE DISCOUNT CARD - REGISTRATION RECEIPT", 105, 28, { align: "center" });
+            doc.line(20, 32, 190, 32);
+
+            // Data Ahli
+            doc.setFontSize(11); doc.setFont("helvetica", "normal");
+            let y = 45;
+            const info = [
+                ["TYPE", data.type], ["CARD NO", data.cardNo], ["NAME", data.nama],
+                ["IC NO", data.ic], ["PHONE", data.phone], ["ADDRESS", data.alamat],
+                ["CITY", data.city], ["STATE", data.state], ["STUDENT CHILDREN", data.anak]
+            ];
+            
+            info.forEach(item => {
+                doc.setFont("helvetica", "bold"); doc.text(item[0] + ":", 25, y);
+                doc.setFont("helvetica", "normal"); doc.text(String(item[1]), 70, y);
+                y += 9;
+            });
+
+            // Nota Pengesahan (T&C)
+            y += 5;
+            doc.setFontSize(8); doc.setFont("helvetica", "bold");
+            doc.text("CONFIRMATION & PDPA CONSENT:", 25, y);
+            y += 4;
+            doc.setFont("helvetica", "italic");
+            const tncMsg = "I hereby confirm that all my personal information stated above is true and complete. I authorize MBS Books & Stationery to process my information under the Personal Data Protection Act 2010 for marketing and services purposes.";
+            const lines = doc.splitTextToSize(tncMsg, 160);
+            doc.text(lines, 25, y);
+            
+            // Tandatangan
+            y += 20;
+            doc.setFont("helvetica", "bold"); doc.text("SIGNATURE:", 25, y);
+            doc.addImage(data.signature, "PNG", 25, y + 2, 50, 25);
+            
+            // Simpan fail
+            doc.save(`MBS_REG_${data.cardNo}.pdf`);
+
+            // Hantar ke Google Sheets
+            await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(data), mode: "no-cors" });
+
+            alert("PENDAFTARAN BERJAYA! Sila semak folder Download anda untuk resit PDF.");
+            location.reload();
+
+        } catch (error) {
+            console.error(error);
+            alert("Berjaya mendaftar. Jika PDF tidak dimuat turun, sila hubungi petugas.");
+            location.reload();
+        }
+    }
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>
