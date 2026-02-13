@@ -3,300 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MBS Member Registration</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+    <title>MBS Books & Stationery - Semakan Ahli</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --main-color: #007bff; --bg-color: #e7f1ff; }
-        body { background-color: var(--bg-color); transition: background-color 0.5s ease; font-family: 'Segoe UI', sans-serif; padding: 20px 0; }
-        
-        .card { 
-            background: #ffffff !important; border: none; border-top: 10px solid var(--main-color); 
-            border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
-            max-width: 650px; margin: auto; transition: border-color 0.5s ease;
+        :root {
+            --mbs-red: #d32f2f;
+            --mbs-dark-red: #b71c1c;
+            --mbs-art: #2e7d32; /* Warna tema Art Store */
+            --white: #ffffff;
+            --light-grey: #f8f9fa;
         }
 
-        input[type="text"], textarea, .form-select { text-transform: uppercase; }
-        .fixed-country { background-color: #f8f9fa !important; color: #6c757d; font-weight: bold; }
-        
-        #signature-pad { border: 2px dashed #ccc; background: #fff; width: 100%; height: 200px; cursor: crosshair; border-radius: 8px; }
-        #reader { width: 100%; display: none; margin-bottom: 10px; border-radius: 10px; overflow: hidden; border: 2px solid var(--main-color); }
-        
-        #loader { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(255,255,255,0.9); z-index: 9999; 
-            justify-content: center; align-items: center; flex-direction: column; 
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
         }
 
-        .tnc-box { 
-            height: 180px; overflow-y: auto; font-size: 11px; background: #f8f9fa; 
-            padding: 12px; border: 1px solid #ddd; margin-bottom: 15px; text-align: justify; line-height: 1.4;
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border-top: 8px solid var(--mbs-red);
         }
 
-        .btn-primary { background-color: var(--main-color) !important; border-color: var(--main-color) !important; font-weight: bold; padding: 12px; }
+        .header {
+            background: var(--white);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: var(--mbs-red);
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .search-section {
+            padding: 0 30px 30px;
+            display: flex;
+            flex-direction: column; /* Ditukar ke column untuk susun butang */
+            gap: 15px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--mbs-red);
+        }
+
+        button.btn-search {
+            flex: 1;
+            padding: 12px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .btn-mbs { background: var(--mbs-red); }
+        .btn-mbs:hover { background: var(--mbs-dark-red); }
+
+        .btn-art { background: var(--mbs-art); }
+        .btn-art:hover { opacity: 0.9; }
+
+        /* Loading Spinner */
+        #loader {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--mbs-red);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Result Table Area */
+        #resultArea {
+            padding: 0 20px 30px;
+            display: none;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background: var(--mbs-red);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            color: #333;
+        }
+
+        tr:hover {
+            background-color: #fff5f5;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+            color: white;
+        }
+
+        .bg-success { background: #28a745; }
+        .bg-danger { background: #dc3545; }
+
+        .btn-print {
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            background: #444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        @media print {
+            .no-print { display: none; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: none; max-width: 100%; }
+            th { background: #000 !important; color: white !important; }
+            td { border-bottom: 1px solid #000; }
+        }
+
+        @media (max-width: 600px) {
+            .btn-group { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
 
-<div id="loader">
-    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
-    <div class="mt-3 fw-bold">SEDANG MEMPROSES & MENJANA PDF...</div>
-</div>
-
 <div class="container">
-    <div class="card p-4">
-        <h3 class="text-center mb-4 fw-bold" style="color: var(--main-color);">MBS MEMBER REGISTRATION</h3>
-        
-        <form id="regForm">
-            <div class="mb-3">
-                <label class="form-label fw-bold">JENIS MEMBER:</label>
-                <select class="form-select form-select-lg" id="type" onchange="updateTheme()">
-                    <option value="PPS" selected>PPS (BLUE - DEFAULT)</option>
-                    <option value="RED">RED</option>
-                    <option value="SKYBLUE">SKYBLUE</option>
-                    <option value="BLACK">BLACK</option>
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-bold">MEMBER CARD NO:</label>
-                <div id="reader"></div>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="cardNo" placeholder="SCAN ATAU TAIP NO KAD" required>
-                    <button class="btn btn-dark" type="button" onclick="startScan()">📷 SCAN</button>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-bold">NAMA PENUH:</label>
-                <input type="text" class="form-control" id="nama" required>
-            </div>
-
-            <div class="row">
-                <div class="col-6 mb-3">
-                    <label class="form-label fw-bold">NOMBOR IC:</label>
-                    <input type="text" class="form-control" id="ic" placeholder="Cth: 900101065544" required>
-                </div>
-                <div class="col-6 mb-3">
-                    <label class="form-label fw-bold">HANDPHONE:</label>
-                    <input type="tel" class="form-control" id="phone" placeholder="Cth: 0123456789" required>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-bold">ALAMAT:</label>
-                <textarea class="form-control" id="alamat" rows="2" required></textarea>
-            </div>
-
-            <div class="row">
-                <div class="col-4 mb-3">
-                    <label class="form-label fw-bold">POSTCODE:</label>
-                    <input type="text" class="form-control" id="postcode" required>
-                </div>
-                <div class="col-4 mb-3">
-                    <label class="form-label fw-bold">CITY:</label>
-                    <input type="text" class="form-control" id="city" required>
-                </div>
-                <div class="col-4 mb-3">
-                    <label class="form-label fw-bold">STATE:</label>
-                    <select class="form-select" id="state" required>
-                        <option value="" disabled selected>PILIH</option>
-                        <option>PAHANG</option><option>SELANGOR</option><option>KUALA LUMPUR</option>
-                        <option>JOHOR</option><option>KEDAH</option><option>KELANTAN</option>
-                        <option>MELAKA</option><option>NEGERI SEMBILAN</option><option>PERAK</option>
-                        <option>PERLIS</option><option>PULAU PINANG</option><option>SABAH</option>
-                        <option>SARAWAK</option><option>TERENGGANU</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="mb-4">
-                <label class="form-label fw-bold">BIL ANAK MASIH BELAJAR:</label>
-                <input type="number" class="form-control" id="anak" value="0">
-            </div>
-
-            <button type="button" class="btn btn-primary w-100" onclick="openSignatureModal()">
-                SETERUSNYA: PENGESAHAN & TANDATANGAN
-            </button>
-        </form>
+    <div class="header no-print">
+        <h1>MBS BOOKS & STATIONERY</h1>
+        <p>Portal Semakan Keahlian Ahli MBS</p>
     </div>
-</div>
 
-<div class="modal fade" id="tncModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold">TERMA, SYARAT & PENGESAHAN</h5>
-            </div>
-            <div class="modal-body">
-                <div class="tnc-box" id="tncText">
-                    <strong>ENGLISH:</strong><br>
-                    I agree to participate & abide at MBS Books & Stationery Pahang Pride Discount Card Term & Conditions. I hereby confirm that all my personal information stated above is true and complete. I hereby irrevocably consent and authorized MBS Books & Stationery to process any of my information and to release the same to any related and/or associate company within the MBS Books & Stationery existing of future business partners of strategic alliances and/or any other 3rd party as MBS may in its absolute discretion deem necessary or expedient for the purpose of marketing and promotion of products and services. I hereby confirm that no future permission or consent from me is necessary of required in relation there to and this shall constitute the consent required under the Personal Data Protection Act 2010 and any other contractual consert for such disclosure of information.
-                    <br><br>
-                    <strong>BAHASA MELAYU:</strong><br>
-                    Saya bersetuju untuk menyertai & mematuhi Terma & Syarat Kad Diskaun MBS Books & Stationery Pahang Pride. Saya dengan ini mengesahkan bahawa semua maklumat peribadi saya yg dinyatakan diatas adalah benar & lengkap. Saya dengan ini secara tidak boleh membatalkan kebenaran & member kuasa kepada MBS Books & Stationery untuk memproses mana-mana maklumat saya dan untuk mengeluarkannya kepada mana-mana syarikat berkaitan dan.atau bersekutu dalam MBS Books & Stationery,perniaagan masa hadapan MBS yang sedia ada, rakan kongsi pakatan startegik dan/atau mana-mana pihak ke-3 lain yg MBS mungkin menurut budi bicara mutlaknya perlu atau suai manfaat untuk tujuan pemasaran dan promosi produk & perkhidmatan. Saya dengan ini mengesahkan bahawa tiada kebenaran masa depan a tau persetujuan daripada saya diperlukan berhubung dengannya dan ini akan membentuk persetujuan yg diperlukan berhubung dengannya dan ini akan membentuk persetujuan yg diperlukan di bawah Akta Perlindungan Data Peribadi 2010 dan sebarang persetujuan kontrak lain untuk pendedahan maklumat sedemikian.
-                </div>
-                
-                <label class="fw-bold mb-2">SILA TURUNKAN TANDATANGAN DI BAWAH:</label>
-                <canvas id="signature-pad"></canvas>
-                <div class="text-end mt-2">
-                    <button class="btn btn-sm btn-outline-danger" onclick="signaturePad.clear()">Padam Semula</button>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">BATAL</button>
-                <button type="button" class="btn btn-primary px-4" onclick="hantarDanDownload()">SAHKAN & DAFTAR</button>
-            </div>
+    <div class="search-section no-print">
+        <input type="text" id="searchInput" placeholder="Masukkan IC / Nama / No. Phone / Card no..." onkeypress="if(event.key === 'Enter') checkMember('MBS')">
+        <div class="btn-group">
+            <button class="btn-search btn-mbs" onclick="checkMember('MBS')">SEMAK MBS BOOKS</button>
+            <button class="btn-search btn-art" onclick="checkMember('ART')">SEMAK ART STORE</button>
         </div>
+    </div>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <p id="loaderText" style="color: var(--mbs-red); font-size: 12px;">Menyemak data pelanggan...</p>
+    </div>
+
+    <div id="resultArea">
+        <div id="resultContent"></div>
     </div>
 </div>
 
 <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWu_EnJEJeszS8tWOeACSzg9mlWGHOivWKA70-_7T449Kakqx78CX4jmi_Vf-_Zkw/exec";
-    let signaturePad;
-    let html5QrCode;
-
-    // 1. TEMA DINAMIK
-    function updateTheme() {
-        const type = document.getElementById('type').value;
-        const themes = {
-            'PPS': { main: '#007bff', bg: '#e7f1ff' },
-            'RED': { main: '#dc3545', bg: '#f8d7da' },
-            'SKYBLUE': { main: '#0dcaf0', bg: '#e0f7fa' },
-            'BLACK': { main: '#212529', bg: '#dee2e6' }
-        };
-        document.documentElement.style.setProperty('--main-color', themes[type].main);
-        document.documentElement.style.setProperty('--bg-color', themes[type].bg);
-    }
-
-    // 2. SCANNER BARCODE
-    function startScan() {
-        const reader = document.getElementById('reader');
-        reader.style.display = 'block';
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start(
-            { facingMode: "environment" }, 
-            { fps: 10, qrbox: { width: 250, height: 150 } },
-            (decodedText) => {
-                document.getElementById('cardNo').value = decodedText;
-                stopScan();
-            }
-        ).catch(err => alert("Kamera Error: " + err));
-    }
-
-    function stopScan() {
-        if (html5QrCode) {
-            html5QrCode.stop().then(() => { document.getElementById('reader').style.display = 'none'; });
-        }
-    }
-
-    // 3. SIGNATURE & MODAL
-    window.onload = () => {
-        const canvas = document.getElementById('signature-pad');
-        signaturePad = new SignaturePad(canvas);
-        window.addEventListener("resize", resizeCanvas);
+    // URL Web App untuk kedua-dua pangkalan data
+    const URLS = {
+        MBS: "https://script.google.com/macros/s/AKfycbwRTd3gpQqkU145sD5LnTUt3Z9L-B3vsWi35_zZd9xy3xTXh2Xy-X3jEFh3kzqVYtpI/exec",
+        ART: "https://script.google.com/macros/s/AKfycbzWslykRB1Ven5gxVAeWGRegITG0LhGF1z3XFWgZ-izwvi8Kwi81-1lH3At8Y26Y3vd/exec" 
     };
 
-    function resizeCanvas() {
-        const canvas = document.getElementById('signature-pad');
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        canvas.width = canvas.offsetWidth * ratio;
-        canvas.height = canvas.offsetHeight * ratio;
-        canvas.getContext("2d").scale(ratio, ratio);
-        signaturePad.clear();
-    }
+    async function checkMember(target) {
+        const query = document.getElementById('searchInput').value.trim();
+        const resultArea = document.getElementById('resultArea');
+        const resultContent = document.getElementById('resultContent');
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loaderText');
 
-    function openSignatureModal() {
-        const form = document.getElementById('regForm');
-        if (!form.checkValidity()) return form.reportValidity();
-        const myModal = new bootstrap.Modal(document.getElementById('tncModal'));
-        myModal.show();
-        setTimeout(resizeCanvas, 500);
-    }
+        if (query.length < 2) {
+            alert("Sila masukkan sekurang-kurangnya 2 aksara untuk mencari.");
+            return;
+        }
 
-    // 4. GENERATE PDF & HANTAR DATA
-    async function hantarDanDownload() {
-        if (signaturePad.isEmpty()) return alert("Sila turunkan tandatangan!");
+        // Tunjuk loading, sorok hasil lama
+        resultArea.style.display = "none";
+        loader.style.display = "block";
+        loaderText.innerText = `Menyemak pangkalan data ${target === 'MBS' ? 'MBS Books' : 'Art Store'}...`;
 
-        document.getElementById('loader').style.display = 'flex';
-        
-        const data = {
-            type: document.getElementById('type').value,
-            cardNo: document.getElementById('cardNo').value.toUpperCase(),
-            nama: document.getElementById('nama').value.toUpperCase(),
-            ic: document.getElementById('ic').value,
-            phone: document.getElementById('phone').value,
-            alamat: document.getElementById('alamat').value.toUpperCase(),
-            postcode: document.getElementById('postcode').value,
-            city: document.getElementById('city').value.toUpperCase(),
-            state: document.getElementById('state').value,
-            anak: document.getElementById('anak').value,
-            signature: signaturePad.toDataURL()
-        };
-
-        // Simpan PDF Terlebih Dahulu
         try {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Header PDF
-            doc.setFontSize(18); doc.setFont("helvetica", "bold");
-            doc.text("MBS BOOKS & STATIONERY", 105, 20, { align: "center" });
-            doc.setFontSize(12);
-            doc.text("PAHANG PRIDE DISCOUNT CARD - REGISTRATION RECEIPT", 105, 28, { align: "center" });
-            doc.line(20, 32, 190, 32);
+            const response = await fetch(`${URLS[target]}?id=${encodeURIComponent(query)}`);
+            const res = await response.json();
 
-            // Data Ahli
-            doc.setFontSize(11); doc.setFont("helvetica", "normal");
-            let y = 45;
-            const info = [
-                ["TYPE", data.type], ["CARD NO", data.cardNo], ["NAME", data.nama],
-                ["IC NO", data.ic], ["PHONE", data.phone], ["ADDRESS", data.alamat],
-                ["CITY", data.city], ["STATE", data.state], ["STUDENT CHILDREN", data.anak]
-            ];
-            
-            info.forEach(item => {
-                doc.setFont("helvetica", "bold"); doc.text(item[0] + ":", 25, y);
-                doc.setFont("helvetica", "normal"); doc.text(String(item[1]), 70, y);
-                y += 9;
-            });
+            loader.style.display = "none";
+            resultArea.style.display = "block";
 
-            // Nota Pengesahan (T&C)
-            y += 5;
-            doc.setFontSize(8); doc.setFont("helvetica", "bold");
-            doc.text("CONFIRMATION & PDPA CONSENT:", 25, y);
-            y += 4;
-            doc.setFont("helvetica", "italic");
-            const tncMsg = "I hereby confirm that all my personal information stated above is true and complete. I authorize MBS Books & Stationery to process my information under the Personal Data Protection Act 2010 for marketing and services purposes.";
-            const lines = doc.splitTextToSize(tncMsg, 160);
-            doc.text(lines, 25, y);
-            
-            // Tandatangan
-            y += 20;
-            doc.setFont("helvetica", "bold"); doc.text("SIGNATURE:", 25, y);
-            doc.addImage(data.signature, "PNG", 25, y + 2, 50, 25);
-            
-            // Simpan fail
-            doc.save(`MBS_REG_${data.cardNo}.pdf`);
+            if (res.status === "FOUND") {
+                // Gunakan warna header berdasarkan pangkalan data yang dicari
+                const headerColor = target === 'MBS' ? 'var(--mbs-red)' : 'var(--mbs-art)';
+                const sourceTitle = target === 'MBS' ? 'MBS BOOKS' : 'ART STORE';
 
-            // Hantar ke Google Sheets
-            await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(data), mode: "no-cors" });
+                let html = `<p style="font-weight:bold; color:#333;">Dijumpai: ${res.data.length} rekod di ${sourceTitle}</p>`;
+                html += `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="background: ${headerColor}">Acct Code</th>
+                                <th style="background: ${headerColor}">Nama Pelanggan</th>
+                                <th style="background: ${headerColor}">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                
+                res.data.forEach(item => {
+                    const statusClass = item.isValid ? "bg-success" : "bg-danger";
+                    const statusText = item.isValid ? "VALID" : "EXPIRED";
+                    
+                    html += `
+                        <tr>
+                            <td><strong>${item.acctCode}</strong></td>
+                            <td>
+                                ${item.name.toUpperCase()}<br>
+                                <small style="color:#777;">Attn: ${item.attention || '-'}</small>
+                            </td>
+                            <td align="center">
+                                <span class="badge ${statusClass}">${statusText}</span>
+                            </td>
+                        </tr>`;
+                });
 
-            alert("PENDAFTARAN BERJAYA! Sila semak folder Download anda untuk resit PDF.");
-            location.reload();
-
+                html += `</tbody></table></div>`;
+                html += `<button class="btn-print no-print" onclick="window.print()">CETAK HASIL SEMAKAN</button>`;
+                resultContent.innerHTML = html;
+            } else if (res.status === "SHORT") {
+                resultContent.innerHTML = `<center style="color:var(--mbs-red); padding:20px;">${res.message}</center>`;
+            } else {
+                const sourceTitle = target === 'MBS' ? 'MBS Books' : 'Art Store';
+                resultContent.innerHTML = `
+                    <center style="padding:40px;">
+                        <span style="font-size:50px;">🔍</span>
+                        <p style="color:#888; font-weight:bold;">Maaf, maklumat tidak dijumpai dalam ${sourceTitle}.</p>
+                    </center>`;
+            }
         } catch (error) {
-            console.error(error);
-            alert("Berjaya mendaftar. Jika PDF tidak dimuat turun, sila hubungi petugas.");
-            location.reload();
+            loader.style.display = "none";
+            alert("Ralat sistem. Sila pastikan sambungan internet stabil.");
         }
     }
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
